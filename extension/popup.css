@@ -1,0 +1,29 @@
+body {
+  width: 240px;
+  padding: 12px;
+  font-family: system-ui, sans-serif;
+  font-size: 13px;
+}
+
+h1 {
+  font-size: 14px;
+  margin: 0 0 10px;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.status {
+  margin: 8px 0 0;
+  color: #555;
+}
+
+.hint {
+  margin: 10px 0 0;
+  color: #777;
+  line-height: 1.4;
+}
