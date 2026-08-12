@@ -90,6 +90,17 @@ else:
     print("(If KGet is currently running, restart it for this to take effect.)")
 PYEOF
 
+echo "Checking KGet's download-finished notification..."
+KNOTIFYRC="$HOME/.config/knotifyrc"
+if [ -f "$KNOTIFYRC" ] && grep -q '^\[Event/kget/finished\]' "$KNOTIFYRC"; then
+  echo "KGet's download-finished notification is already configured, leaving it as-is"
+elif command -v kwriteconfig6 >/dev/null 2>&1; then
+  kwriteconfig6 --file knotifyrc --group "Event/kget/finished" --key Action Popup
+  echo "Enabled a desktop popup notification for KGet's \"Download Finished\" event"
+else
+  echo "Skipped: 'kwriteconfig6' not found (not on KDE Plasma?) -- no popup notification set up"
+fi
+
 EXT_ID=$(cat "$SCRIPT_DIR/keys/extension-id.txt")
 
 cat <<EOF

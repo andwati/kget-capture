@@ -11,16 +11,20 @@ async function refreshBadge() {
   updateBadge(autoCaptureEnabled);
 }
 
-function sendToKGet(url) {
-  chrome.runtime.sendNativeMessage(NATIVE_HOST, { action: "addTransfer", url }, (response) => {
-    if (chrome.runtime.lastError) {
-      console.error("[kget-capture] native host error:", chrome.runtime.lastError.message);
-      return;
+function sendToKGet(url, filename) {
+  chrome.runtime.sendNativeMessage(
+    NATIVE_HOST,
+    { action: "addTransfer", url, filename: filename || null },
+    (response) => {
+      if (chrome.runtime.lastError) {
+        console.error("[kget-capture] native host error:", chrome.runtime.lastError.message);
+        return;
+      }
+      if (!response || !response.ok) {
+        console.error("[kget-capture] KGet reported failure:", response && response.error);
+      }
     }
-    if (!response || !response.ok) {
-      console.error("[kget-capture] KGet reported failure:", response && response.error);
-    }
-  });
+  );
 }
 
 chrome.runtime.onInstalled.addListener(async (details) => {
@@ -40,10 +44,21 @@ chrome.contextMenus.onClicked.addListener((info) => {
   if (info.menuItemId !== MENU_ID) return;
   const url = info.linkUrl || info.srcUrl;
   if (!url) return;
-  sendToKGet(url);
+  sendToKGet(url, null);
 });
 
-chrome.downloads.onCreated.addListener(async (item) => {
+// onDeterminingFilename (rather than onCreated) fires once Chrome has
+// already resolved the real filename (from Content-Disposition or the URL),
+// which is exactly what we need to hand KGet the correct name instead of an
+// opaque URL path segment.
+chrome.downloads.onDeterminingFilename.addListener((item, suggest) => {
+  // We're about to cancel this download regardless, so Chrome's own choice
+  // doesn't matter -- just let it proceed so the event resolves promptly.
+  suggest();
+  captureDownload(item);
+});
+
+async function captureDownload(item) {
   const { autoCaptureEnabled } = await chrome.storage.local.get({ autoCaptureEnabled: true });
   if (!autoCaptureEnabled) return;
 
@@ -67,8 +82,10 @@ chrome.downloads.onCreated.addListener(async (item) => {
   } catch (e) {
     console.error("[kget-capture] failed to erase Chrome download entry:", e);
   }
-  sendToKGet(url);
-});
+
+  const filename = item.filename ? item.filename.split(/[\\/]/).pop() : null;
+  sendToKGet(url, filename);
+}
 
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "local" && "autoCaptureEnabled" in changes) {

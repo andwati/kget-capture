@@ -2,9 +2,26 @@
 """Native messaging host bridging Chrome to KGet's D-Bus service."""
 
 import json
+import os
 import struct
 import subprocess
 import sys
+
+
+def default_download_dir():
+    home = os.path.expanduser("~")
+    try:
+        result = subprocess.run(
+            ["xdg-user-dir", "DOWNLOAD"], capture_output=True, text=True, timeout=5
+        )
+        downloads = result.stdout.strip()
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        downloads = ""
+    # xdg-user-dir falls back to bare $HOME (not $HOME/Downloads) when
+    # there's no ~/.config/user-dirs.dirs at all -- treat that as not found.
+    if not downloads or downloads.rstrip("/") == home.rstrip("/"):
+        return os.path.join(home, "Downloads")
+    return downloads
 
 
 def read_message():
@@ -23,20 +40,24 @@ def write_message(message):
     sys.stdout.buffer.flush()
 
 
-def add_transfer(url):
-    # showNewTransferDialog opens KGet's "New Download" dialog (editable name
-    # and destination) and returns immediately without waiting for the user
-    # to interact with it. addTransfer, by contrast, only returns once the
-    # dialog is dismissed when destDir is empty -- it blocks the D-Bus call
-    # on human input, which is why we don't use it here.
+def add_transfer(url, filename):
+    # A non-empty destDir makes KGet add+start the transfer immediately with
+    # no interactive dialog. Passing dir+filename (when we know the real
+    # filename, e.g. from Chrome's own Content-Disposition resolution) also
+    # sidesteps KGet's own filename guess, which is derived purely from the
+    # URL path and gets it wrong for opaque/signed URLs.
+    dest_dir = default_download_dir()
+    dest = os.path.join(dest_dir, filename) if filename else dest_dir
     cmd = [
         "dbus-send",
         "--print-reply",
         "--reply-timeout=10000",
         "--dest=org.kde.kget",
         "/KGet",
-        "org.kde.kget.main.showNewTransferDialog",
-        f"array:string:{url}",
+        "org.kde.kget.main.addTransfer",
+        f"string:{url}",
+        f"string:{dest}",
+        "boolean:true",
     ]
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
@@ -57,7 +78,7 @@ def main():
         write_message({"ok": False, "error": "invalid request"})
         return
 
-    ok, error = add_transfer(message["url"])
+    ok, error = add_transfer(message["url"], message.get("filename"))
     write_message({"ok": True} if ok else {"ok": False, "error": error})
 
 
