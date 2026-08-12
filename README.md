@@ -176,6 +176,11 @@ Prebuilt releases are published on the
   observed in a non-finished state at least once, so it silently skips
   small/fast downloads that complete before that first observation.
 
+## Privacy
+
+KGet Capture doesn't collect, transmit, or store any user data. See
+[PRIVACY.md](PRIVACY.md) for details.
+
 ## License
 
 MIT, see [LICENSE](LICENSE).
