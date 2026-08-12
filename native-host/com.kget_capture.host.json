@@ -3,5 +3,5 @@
   "description": "Native messaging host that hands off download URLs to KGet via D-Bus",
   "path": "__HOST_SCRIPT_PATH__",
   "type": "stdio",
-  "allowed_origins": ["chrome-extension://lgkhlfhejbffjnpcdlpjclicihnbjijp/"]
+  "allowed_origins": ["chrome-extension://mkiffclapimhbjjlgkndlillglopbcic/"]
 }

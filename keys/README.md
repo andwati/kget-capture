@@ -1,32 +1,28 @@
-# Extension signing key
+# Extension ID
 
-This directory holds the RSA key pair used to pin the extension's Chrome ID so
-it's identical across every install (needed so the native messaging host's
-`allowed_origins` can be hardcoded instead of asking each user to paste their
-extension ID).
+`extension-id.txt` holds the extension's one canonical ID,
+`mkiffclapimhbjjlgkndlillglopbcic`, assigned by the Chrome Web Store on
+first publish. It's hardcoded into
+`native-host/com.kget_capture.host.json`'s `allowed_origins`, which is what
+lets the native host trust connections from the extension without asking
+each user to paste their own ID.
 
-- `kget-capture-private.pem` — **not committed** (see `.gitignore`). Keep it
-  somewhere safe if you want to be able to reproduce the same key deterministically
-  later; losing it just means a future re-key would get a new extension ID, it's
-  not a security incident.
-- `kget-capture-public.der` / `kget-capture-public.b64` — derived from the
-  private key. The base64 contents of `kget-capture-public.b64` is pasted
-  verbatim into `extension/manifest.json`'s `"key"` field. These are already
-  effectively public once checked into `manifest.json`, so committing them is
-  fine (and `extension-id.txt` too).
-- `extension-id.txt` — the 32-character Chrome extension ID derived from the
-  public key (also hardcoded into `native-host/com.kget_capture.host.json`).
+`extension/manifest.json` intentionally has no `"key"` field: the Chrome Web
+Store dashboard rejects any manifest that includes one ("key field is not
+allowed in manifest"), since it assigns its own permanent ID on first
+publish instead.
 
-## Regenerating (only if rotating the key)
+`kget-capture-private.pem` / `kget-capture-public.der` / `kget-capture-public.b64`
+are leftover from an earlier approach that pinned a separate ID for unpacked
+installs via a local key pair. They're no longer referenced anywhere (the
+`.pem` was never committed; see `.gitignore`) and can be ignored or removed.
 
-```bash
-openssl genrsa -out keys/kget-capture-private.pem 2048
-openssl rsa -in keys/kget-capture-private.pem -pubout -outform DER -out keys/kget-capture-public.der
-openssl base64 -A -in keys/kget-capture-public.der -out keys/kget-capture-public.b64
-openssl dgst -sha256 -binary keys/kget-capture-public.der | head -c 16 | od -An -tx1 \
-  | tr -d ' \n' | tr '0123456789abcdef' 'abcdefghijklmnop' > keys/extension-id.txt
-```
+## Implication for local "Load unpacked" development
 
-Rotating the key changes the extension ID, which means `extension/manifest.json`'s
-`"key"` and `native-host/com.kget_capture.host.json`'s `allowed_origins` both
-need updating to match.
+Since there's no pinned key, Chrome derives an unpacked install's ID from a
+hash of its local path, which won't match
+`mkiffclapimhbjjlgkndlillglopbcic` and differs per machine/checkout. To test
+an unpacked build against the native host locally, add your own unpacked
+ID to `allowed_origins` in `~/.config/<browser>/NativeMessagingHosts/com.kget_capture.host.json`
+after running `install.sh` (Chrome shows the unpacked ID on
+`chrome://extensions` once loaded).

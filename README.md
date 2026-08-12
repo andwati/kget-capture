@@ -92,8 +92,10 @@ per step 2 above.)
 
 Then in `chrome://extensions`: enable **Developer mode**, click **Load
 unpacked**, and select the `extension/` directory (from your clone, or the
-extracted extension zip). `install.sh` prints the extension's fixed ID so
-you can confirm it loaded correctly.
+extracted extension zip). Chrome assigns this unpacked copy its own ID,
+different from the published extension's, so add it to `allowed_origins` in
+`~/.config/<browser>/NativeMessagingHosts/com.kget_capture.host.json` (see
+[keys/README.md](keys/README.md)) for the native host to accept it.
 
 ## Usage
 
@@ -115,19 +117,18 @@ Store listing); that step can't be scripted.
 
 Prebuilt releases are published on the
 [Releases page](https://github.com/andwati/kget-capture/releases); each
-`vX.Y.Z` tag push builds and publishes one automatically, as three zips:
+`vX.Y.Z` tag push builds and publishes one automatically, as two zips:
 
 - `kget-capture-vX.Y.Z.zip`: full source, for `install.sh`/`install-remote.sh`.
 - `kget-capture-extension-vX.Y.Z.zip`: just the extension, manifest at the
-  zip root, `key` field intact, for manual "Load unpacked" installs.
-- `kget-capture-store-vX.Y.Z.zip`: same extension, but with `key` stripped,
-  for uploading to the Chrome Web Store dashboard. The Store rejects any
-  manifest containing `key` ("key field is not allowed in manifest") since
-  it assigns its own permanent ID on first publish, which won't match the
-  pinned ID (`keys/extension-id.txt`) the other zips use. After the first
-  successful Store publish, update `native-host/com.kget_capture.host.json`'s
-  `allowed_origins` to include the Store-assigned ID alongside the pinned
-  one, so both installs can reach the native host.
+  zip root, ready for either a manual "Load unpacked" install or a Chrome
+  Web Store upload.
+
+The published extension's canonical ID
+(`mkiffclapimhbjjlgkndlillglopbcic`) is hardcoded into
+`native-host/com.kget_capture.host.json`'s `allowed_origins`; see
+[keys/README.md](keys/README.md) for why, and what to do for local unpacked
+testing (which gets a different, machine-specific ID).
 
 ## Known limitations
 

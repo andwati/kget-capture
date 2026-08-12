@@ -129,19 +129,21 @@ if ! command -v notify-send >/dev/null 2>&1; then
   echo "WARNING: 'notify-send' not found -- captures will still work, but you won't get a notification when they finish"
 fi
 
-EXT_ID=$(cat "$SCRIPT_DIR/keys/extension-id.txt")
-
 cat <<EOF
 
 Install complete.
 
-Extension ID: $EXT_ID
+If you installed the extension from the Chrome Web Store, you're done --
+reopen its toolbar popup and click "I ran it, check again" to confirm.
 
-Next steps:
+If you're loading it unpacked for development instead:
   1. Open chrome://extensions (or the equivalent for your browser)
   2. Enable "Developer mode" (top-right toggle)
   3. Click "Load unpacked" and select: $SCRIPT_DIR/extension
-  4. Confirm the loaded extension's ID matches: $EXT_ID
+  4. Chrome will assign this unpacked copy its own ID, different from the
+     published extension's. Find it on chrome://extensions and add it to
+     "allowed_origins" in ~/.config/<browser>/NativeMessagingHosts/com.kget_capture.host.json
+     so the native host will accept connections from it too.
 
 Make sure KGet is running (or set to autostart) for captures to work.
 EOF
