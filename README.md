@@ -97,13 +97,6 @@ git push origin v1.0.0
   only skips its interactive "New Download" dialog when given a real
   destination path up front, so instant capture and an editable prompt are
   mutually exclusive given KGet's D-Bus API.
-- **The context-menu capture can't always get the correct filename.**
-  Auto-capture gets the real filename for free from Chrome's own
-  `Content-Disposition` resolution. Right-click captures don't have that —
-  the extension only has the raw URL — so KGet falls back to guessing from
-  the URL path, which is wrong for opaque/signed URLs (e.g. cloud storage
-  links). Fixing this would require broad host permissions and an extra HTTP
-  request per right-click, which isn't worth it for now.
 - **Chrome may still show its own "Save As" dialog** if you skipped step 5 of
   Install above — see there for why and how to fix it.
 - **KGet must already be running.** If it's not, captures fail silently from

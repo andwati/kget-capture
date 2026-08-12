@@ -49,7 +49,12 @@ def add_transfer(url, filename):
     # sidesteps KGet's own filename guess, which is derived purely from the
     # URL path and gets it wrong for opaque/signed URLs.
     dest_dir = default_download_dir()
-    dest = os.path.join(dest_dir, filename) if filename else dest_dir
+    # A bare directory path with no trailing slash (e.g. "/home/ian/Downloads")
+    # gets misparsed by KGet's addTransfer as dir="/home/ian" + filename=
+    # "Downloads" -- the same split it applies to a real dir/filename path --
+    # landing the transfer in the parent directory instead. A trailing slash
+    # keeps it unambiguous when we don't have a real filename to append.
+    dest = os.path.join(dest_dir, filename) if filename else dest_dir.rstrip("/") + "/"
     cmd = [
         "dbus-send",
         "--print-reply",

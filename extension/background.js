@@ -52,6 +52,11 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   refreshBadge();
 });
 
+// Downloads started from the context menu, tracked so captureDownload()
+// still resolves/forwards their real filename even when auto-capture is
+// toggled off -- a right-click "Download with KGet" should always work.
+const pendingContextMenuDownloads = new Set();
+
 chrome.contextMenus.onClicked.addListener((info) => {
   if (info.menuItemId !== MENU_ID) return;
   const url = info.linkUrl || info.srcUrl;
@@ -60,7 +65,22 @@ chrome.contextMenus.onClicked.addListener((info) => {
     console.warn("[kget-capture] cannot hand a local/embedded URL to KGet:", url);
     return;
   }
-  sendToKGet(url, null);
+  // Route through chrome.downloads instead of sending the raw URL straight
+  // to KGet -- this reuses onDeterminingFilename/captureDownload below to
+  // get Chrome's real resolved filename (Content-Disposition, etc.) instead
+  // of leaving KGet to guess one from the bare URL, which drops query
+  // strings and gets opaque/signed URLs wrong.
+  chrome.downloads.download({ url }, (downloadId) => {
+    if (chrome.runtime.lastError || downloadId === undefined) {
+      console.error(
+        "[kget-capture] couldn't start download to resolve filename, falling back to raw URL:",
+        chrome.runtime.lastError && chrome.runtime.lastError.message
+      );
+      sendToKGet(url, null);
+      return;
+    }
+    pendingContextMenuDownloads.add(downloadId);
+  });
 });
 
 // onDeterminingFilename (rather than onCreated) fires once Chrome has
@@ -75,8 +95,9 @@ chrome.downloads.onDeterminingFilename.addListener((item, suggest) => {
 });
 
 async function captureDownload(item) {
+  const isContextMenuCapture = pendingContextMenuDownloads.delete(item.id);
   const { autoCaptureEnabled } = await chrome.storage.local.get({ autoCaptureEnabled: true });
-  if (!autoCaptureEnabled) return;
+  if (!autoCaptureEnabled && !isContextMenuCapture) return;
 
   const url = item.finalUrl || item.url;
   if (!isCapturableUrl(url)) {
