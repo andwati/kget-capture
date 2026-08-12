@@ -15,10 +15,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Package extension
-        run: |
-          cd extension
-          zip -r "../kget-capture-${GITHUB_REF_NAME}.zip" .
+      - name: Package source
+        # Users need the whole repo (install.sh, native-host/, keys/), not
+        # just extension/ -- the extension itself now ships via the Chrome
+        # Web Store. git archive only includes tracked files, so the
+        # gitignored private key (never committed) can't end up in it.
+        run: git archive --format=zip -o "kget-capture-${GITHUB_REF_NAME}.zip" HEAD
 
       - name: Create release
         uses: softprops/action-gh-release@v2
