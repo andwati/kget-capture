@@ -51,6 +51,19 @@ This removes the native messaging host registrations and the installed host
 script. You'll still need to remove the unpacked extension yourself via
 `chrome://extensions` — that step can't be scripted.
 
+## Releases
+
+Pushing a tag matching `v*.*.*` (e.g. `v1.0.0`) triggers a GitHub Actions
+workflow ([.github/workflows/release.yml](.github/workflows/release.yml))
+that zips `extension/` and publishes it as a GitHub Release with
+auto-generated release notes. Bump `"version"` in `extension/manifest.json`
+before tagging so the packaged extension's version matches.
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
 ## Known limitations
 
 - **`blob:`/`data:` URLs can't be captured.** There's no real network URL to

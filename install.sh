@@ -51,6 +51,45 @@ if [ "$registered_any" = false ]; then
   done
 fi
 
+echo "Checking KGet's default download folder..."
+python3 - <<'PYEOF'
+import configparser
+import os
+import subprocess
+
+kgetrc = os.path.expanduser("~/.config/kgetrc")
+key = "LastDirectory[$e]"
+
+home = os.path.expanduser("~")
+try:
+    result = subprocess.run(["xdg-user-dir", "DOWNLOAD"], capture_output=True, text=True, timeout=5)
+    downloads = result.stdout.strip()
+except (FileNotFoundError, subprocess.TimeoutExpired):
+    downloads = ""
+# xdg-user-dir falls back to bare $HOME (not $HOME/Downloads) when there's
+# no ~/.config/user-dirs.dirs at all -- treat that the same as "not found".
+if not downloads or downloads.rstrip("/") == home.rstrip("/"):
+    downloads = os.path.join(home, "Downloads")
+
+cp = configparser.ConfigParser(interpolation=None)
+cp.optionxform = str
+if os.path.exists(kgetrc):
+    cp.read(kgetrc)
+
+if not cp.has_section("Internal"):
+    cp.add_section("Internal")
+
+if key in cp["Internal"]:
+    print(f"KGet's default download folder is already set ({cp['Internal'][key]}), leaving it as-is")
+else:
+    cp["Internal"][key] = downloads + "/"
+    os.makedirs(os.path.dirname(kgetrc), exist_ok=True)
+    with open(kgetrc, "w") as f:
+        cp.write(f)
+    print(f"Set KGet's default download folder to {downloads}")
+    print("(If KGet is currently running, restart it for this to take effect.)")
+PYEOF
+
 EXT_ID=$(cat "$SCRIPT_DIR/keys/extension-id.txt")
 
 cat <<EOF
