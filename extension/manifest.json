@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "KGet Capture",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Send browser downloads to KGet (KDE Download Manager) on Linux.",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtM1nFg5pPd3UBzynUJHj6aUy7bjudZaX9AQTWGMqAX3fXylw1lubSzP1/BaS9ivvgOJg/loyEgzEZlcNPzblFVlg8BqEJ3tntdk2OzYvUs0pUdcPzzyjso9TykCkUUTI7ev8JkreW/FYlinfvNwSYN4/c1s3h8/I6XHtxOdmO1G3bS98+BQaXPldbDmxoKwyWR8u1f8gTO2Mg3GY4BHau3RWf1kgtNzh20p9wE3sEFdWkFu7ArgRCIrWLh6m3O6lolnHQSCWPwtOTx893Qkp9Eu6FwUnoWc8rsYx8sqa0eNCTCS6Kjr1Iu3yEJ5y9390jUiDZTQ/c62ueCTQaYv2bwIDAQAB",
   "permissions": ["downloads", "contextMenus", "storage", "nativeMessaging"],
