@@ -6,17 +6,32 @@
 </head>
 <body>
   <h1>KGet Capture</h1>
-  <label class="toggle-row">
-    <input type="checkbox" id="auto-capture-toggle">
-    <span>Auto-capture all downloads</span>
-  </label>
-  <p class="status" id="status-line"></p>
-  <p class="hint">Right-click any link, image, video, or audio and choose
-    "Download with KGet" to send it to KGet on demand.</p>
-  <p class="hint">Downloads still prompting for a location? Chrome shows that
-    dialog itself, before this extension can intercept anything.
-    <button id="open-download-settings" type="button">Turn off Chrome's download prompt</button>
-  </p>
+
+  <div id="setup-needed" hidden>
+    <p class="hint">One-time setup needed: KGet Capture needs a small local
+      helper installed before it can talk to KGet. Run this in a terminal:</p>
+    <div class="cmd-row">
+      <code id="setup-command"></code>
+      <button id="copy-command" type="button">Copy</button>
+    </div>
+    <p class="status" id="copy-feedback"></p>
+    <button id="recheck-setup" type="button">I ran it, check again</button>
+  </div>
+
+  <div id="ready" hidden>
+    <label class="toggle-row">
+      <input type="checkbox" id="auto-capture-toggle">
+      <span>Auto-capture all downloads</span>
+    </label>
+    <p class="status" id="status-line"></p>
+    <p class="hint">Right-click any link, image, video, or audio and choose
+      "Download with KGet" to send it to KGet on demand.</p>
+    <p class="hint">Downloads still prompting for a location? Chrome shows that
+      dialog itself, before this extension can intercept anything.
+      <button id="open-download-settings" type="button">Turn off Chrome's download prompt</button>
+    </p>
+  </div>
+
   <script src="popup.js"></script>
 </body>
 </html>

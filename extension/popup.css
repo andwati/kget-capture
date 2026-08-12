@@ -1,5 +1,5 @@
 body {
-  width: 240px;
+  width: 320px;
   padding: 12px;
   font-family: system-ui, sans-serif;
   font-size: 13px;
@@ -31,6 +31,41 @@ h1 {
 .hint button {
   display: block;
   margin-top: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.cmd-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.cmd-row code {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  white-space: nowrap;
+  background: #f0f0f0;
+  padding: 4px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+.cmd-row button {
+  flex: none;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+#recheck-setup {
+  display: block;
+  margin-top: 10px;
   padding: 4px 8px;
   font-size: 12px;
   font-family: inherit;

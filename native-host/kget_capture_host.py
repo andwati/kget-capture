@@ -154,7 +154,17 @@ def spawn_notifier(transfer_path, dest):
 
 def main():
     message = read_message()
-    if not message or message.get("action") != "addTransfer" or "url" not in message:
+    if not message:
+        write_message({"ok": False, "error": "invalid request"})
+        return
+
+    # The extension popup uses this to detect whether the native host is
+    # installed/registered at all, distinct from whether a transfer succeeds.
+    if message.get("action") == "ping":
+        write_message({"ok": True})
+        return
+
+    if message.get("action") != "addTransfer" or "url" not in message:
         write_message({"ok": False, "error": "invalid request"})
         return
 

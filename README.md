@@ -14,6 +14,8 @@ browser's built-in downloader.
 - Linux with KGet installed and running (or set to autostart)
 - A Chromium-based browser: Chrome, Chromium, Brave, Vivaldi, or Edge
 - `python3`, `dbus-send`
+- `curl` or `wget`, for the one-line remote installer below (skip if you'd
+  rather download and run `install.sh` yourself)
 - `notify-send`, optional, for the completion notification
 - `kwriteconfig6` (KDE Frameworks), optional, silences KGet's own duplicate
   notification
@@ -49,22 +51,26 @@ without them.)
 
 1. Install the extension from the Chrome Web Store: **`<CHROME_WEB_STORE_URL>`**
    *(placeholder, fill in once the listing is live)*.
-2. Install the native messaging host that lets the extension talk to KGet.
-   Download and extract `kget-capture-vX.Y.Z.zip` (the source archive, not
-   `kget-capture-extension-vX.Y.Z.zip`) from the
-   [Releases page](https://github.com/andwati/kget-capture/releases), then
-   from inside that folder:
+2. Click the extension's toolbar icon. The popup detects that the native
+   messaging host isn't set up yet and shows a one-line command; run it in a
+   terminal, then click "I ran it, check again" in the popup:
    ```bash
-   ./install.sh
+   curl -fsSL https://raw.githubusercontent.com/andwati/kget-capture/main/install-remote.sh | bash
    ```
+   (or with `wget`: `wget -qO- https://raw.githubusercontent.com/andwati/kget-capture/main/install-remote.sh | bash`)
+
+   This downloads the latest release and runs its `install.sh`, which
+   registers the native host for every supported browser it finds installed
+   and prints any remaining setup warnings. No git clone required. If you'd
+   rather run it yourself: download and extract `kget-capture-vX.Y.Z.zip`
+   (the source archive, not `kget-capture-extension-vX.Y.Z.zip`) from the
+   [Releases page](https://github.com/andwati/kget-capture/releases), then
+   from inside that folder run `./install.sh` directly.
 3. Open your browser's download settings (`chrome://settings/downloads`,
    `brave://settings/downloads`, etc.) and turn **off** "Ask where to save
    each file before downloading". Chrome shows this dialog itself, before the
    extension gets a chance to intercept the download, so this one-time change
-   is required.
-
-`install.sh` registers the native host for every supported browser it finds
-installed and prints any remaining setup warnings.
+   is required (no extension API can do it for you).
 
 ### Building from source
 
@@ -131,6 +137,9 @@ Prebuilt releases are published on the
 
 ## Troubleshooting
 
+- **`install-remote.sh` fails to look up the latest release?** It queries
+  GitHub's API, which rate-limits unauthenticated requests (60/hour per IP);
+  wait a bit, or fall back to the manual `install.sh` steps in Install above.
 - **Check native host registration:** confirm
   `~/.config/<browser>/NativeMessagingHosts/com.kget_capture.host.json` exists
   and its `path` points at an executable file
