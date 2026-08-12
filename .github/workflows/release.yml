@@ -15,15 +15,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Package extension
+        # Chrome requires manifest.json at the zip root, both for Web Store
+        # upload and for manually loading unpacked -- so this one archives
+        # only extension/'s contents, not the whole repo.
+        run: |
+          cd extension
+          zip -r "../kget-capture-extension-${GITHUB_REF_NAME}.zip" .
+
       - name: Package source
-        # Users need the whole repo (install.sh, native-host/, keys/), not
-        # just extension/ -- the extension itself now ships via the Chrome
-        # Web Store. git archive only includes tracked files, so the
-        # gitignored private key (never committed) can't end up in it.
+        # Separately, the native-host installer bundle (install.sh,
+        # native-host/, keys/) needs the whole repo. git archive only
+        # includes tracked files, so the gitignored private key (never
+        # committed) can't end up in it.
         run: git archive --format=zip -o "kget-capture-${GITHUB_REF_NAME}.zip" HEAD
 
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          files: kget-capture-${{ github.ref_name }}.zip
+          files: |
+            kget-capture-${{ github.ref_name }}.zip
+            kget-capture-extension-${{ github.ref_name }}.zip
           generate_release_notes: true

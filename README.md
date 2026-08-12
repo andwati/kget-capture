@@ -50,7 +50,8 @@ without them.)
 1. Install the extension from the Chrome Web Store: **`<CHROME_WEB_STORE_URL>`**
    *(placeholder, fill in once the listing is live)*.
 2. Install the native messaging host that lets the extension talk to KGet.
-   Download and extract the latest release from the
+   Download and extract `kget-capture-vX.Y.Z.zip` (the source archive, not
+   `kget-capture-extension-vX.Y.Z.zip`) from the
    [Releases page](https://github.com/andwati/kget-capture/releases), then
    from inside that folder:
    ```bash
@@ -76,9 +77,17 @@ cd kget-capture
 ./install.sh
 ```
 
+(Or, for an already-tagged version without cloning: download and extract
+`kget-capture-extension-vX.Y.Z.zip` from the
+[Releases page](https://github.com/andwati/kget-capture/releases) instead.
+It's already just `extension/`'s contents, unpacked at the zip root the way
+Chrome expects. You'll still need `kget-capture-vX.Y.Z.zip` for `install.sh`,
+per step 2 above.)
+
 Then in `chrome://extensions`: enable **Developer mode**, click **Load
-unpacked**, and select this repo's `extension/` directory. `install.sh`
-prints the extension's fixed ID so you can confirm it loaded correctly.
+unpacked**, and select the `extension/` directory (from your clone, or the
+extracted extension zip). `install.sh` prints the extension's fixed ID so
+you can confirm it loaded correctly.
 
 ## Usage
 
