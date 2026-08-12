@@ -18,10 +18,33 @@ jobs:
       - name: Package extension
         # Chrome requires manifest.json at the zip root, both for Web Store
         # upload and for manually loading unpacked -- so this one archives
-        # only extension/'s contents, not the whole repo.
+        # only extension/'s contents, not the whole repo. Keeps the pinned
+        # "key" field, so unpacked loads get the stable, predictable ID.
         run: |
           cd extension
           zip -r "../kget-capture-extension-${GITHUB_REF_NAME}.zip" .
+
+      - name: Package extension for Web Store upload
+        # The Chrome Web Store dashboard rejects any manifest containing a
+        # "key" field ("key field is not allowed in manifest") -- it assigns
+        # its own permanent ID on first publish instead. Strip it from a
+        # copy so this zip is upload-ready; the other extension zip above
+        # keeps "key" for stable unpacked/dev IDs.
+        run: |
+          rm -rf /tmp/store-extension
+          cp -r extension /tmp/store-extension
+          python3 -c "
+          import json
+          path = '/tmp/store-extension/manifest.json'
+          with open(path) as f:
+              manifest = json.load(f)
+          manifest.pop('key', None)
+          with open(path, 'w') as f:
+              json.dump(manifest, f, indent=2)
+              f.write('\n')
+          "
+          cd /tmp/store-extension
+          zip -r "$OLDPWD/kget-capture-store-${GITHUB_REF_NAME}.zip" .
 
       - name: Package source
         # Separately, the native-host installer bundle (install.sh,
@@ -36,4 +59,5 @@ jobs:
           files: |
             kget-capture-${{ github.ref_name }}.zip
             kget-capture-extension-${{ github.ref_name }}.zip
+            kget-capture-store-${{ github.ref_name }}.zip
           generate_release_notes: true

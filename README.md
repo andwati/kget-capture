@@ -115,7 +115,19 @@ Store listing); that step can't be scripted.
 
 Prebuilt releases are published on the
 [Releases page](https://github.com/andwati/kget-capture/releases); each
-`vX.Y.Z` tag push builds and publishes one automatically.
+`vX.Y.Z` tag push builds and publishes one automatically, as three zips:
+
+- `kget-capture-vX.Y.Z.zip`: full source, for `install.sh`/`install-remote.sh`.
+- `kget-capture-extension-vX.Y.Z.zip`: just the extension, manifest at the
+  zip root, `key` field intact, for manual "Load unpacked" installs.
+- `kget-capture-store-vX.Y.Z.zip`: same extension, but with `key` stripped,
+  for uploading to the Chrome Web Store dashboard. The Store rejects any
+  manifest containing `key` ("key field is not allowed in manifest") since
+  it assigns its own permanent ID on first publish, which won't match the
+  pinned ID (`keys/extension-id.txt`) the other zips use. After the first
+  successful Store publish, update `native-host/com.kget_capture.host.json`'s
+  `allowed_origins` to include the Store-assigned ID alongside the pinned
+  one, so both installs can reach the native host.
 
 ## Known limitations
 
