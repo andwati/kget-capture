@@ -14,3 +14,7 @@ checkbox.addEventListener("change", () => {
   chrome.storage.local.set({ autoCaptureEnabled: checkbox.checked });
   renderStatus(checkbox.checked);
 });
+
+document.getElementById("open-download-settings").addEventListener("click", () => {
+  chrome.tabs.create({ url: "chrome://settings/downloads" });
+});

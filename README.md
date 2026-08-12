@@ -11,8 +11,11 @@ addition to) the browser's built-in downloader.
   starts is cancelled and handed off to KGet the same way, automatically,
   with the correct filename (resolved by Chrome itself, so it's right even
   for URLs whose path is just an opaque ID). Defaults to ON.
-- KGet's own "Download Finished" desktop notification is enabled on install,
-  so you still get feedback once a capture completes.
+- A "Download complete" desktop notification appears once a capture actually
+  finishes downloading. This is driven by the extension itself (not KGet's
+  own per-transfer notification, which KGet silently skips for downloads
+  that finish very quickly — see Troubleshooting), so it fires reliably
+  regardless of file size or speed.
 
 ## Requirements
 
@@ -20,8 +23,12 @@ addition to) the browser's built-in downloader.
 - One of: Google Chrome, Chromium, Brave, Vivaldi, Microsoft Edge
 - `python3` and `dbus-send` on `PATH` (standard on virtually all Linux/KDE
   systems already)
-- `kwriteconfig6` (ships with KDE Plasma) — optional, only used to enable the
-  download-finished notification; install still works without it
+- `notify-send` (ships with most Linux desktops via libnotify) — optional,
+  only used for the download-complete notification; captures still work
+  without it, just silently
+- `kwriteconfig6` (ships with KDE Plasma) — optional, only used to disable
+  KGet's own unreliable per-transfer notification so it doesn't double up
+  with the extension's; install still works without it
 
 ## Install
 
@@ -38,6 +45,12 @@ finds installed, then prints the extension's fixed ID and next steps:
 2. Enable **Developer mode** (top-right toggle).
 3. Click **Load unpacked** and select this repo's `extension/` directory.
 4. Confirm the loaded extension's ID matches the one `install.sh` printed.
+5. Open `chrome://settings/downloads` (or your browser's equivalent, e.g.
+   `brave://settings/downloads`, `edge://settings/downloads`) and turn **off**
+   "Ask where to save each file before downloading". Chrome shows this dialog
+   itself, before the extension ever gets a chance to intercept the download —
+   no extension API can read or suppress it, so this one-time setting change
+   is required for captures to work without an extra prompt.
 
 ## Usage
 
@@ -89,12 +102,8 @@ git push origin v1.0.0
   the URL path, which is wrong for opaque/signed URLs (e.g. cloud storage
   links). Fixing this would require broad host permissions and an extra HTTP
   request per right-click, which isn't worth it for now.
-- **Chrome may still show its own "Save As" dialog.** This is controlled by
-  Chrome's own **Ask where to save each file before downloading** setting
-  (`chrome://settings/downloads`) — no extension API can read or suppress
-  it, and if it's on, Chrome shows the picker *before* our extension gets a
-  chance to see the download at all. Turn that setting off for auto-capture
-  to work without an extra prompt.
+- **Chrome may still show its own "Save As" dialog** if you skipped step 5 of
+  Install above — see there for why and how to fix it.
 - **KGet must already be running.** If it's not, captures fail silently from
   the user's perspective — check the service worker console for the actual
   error (see Troubleshooting).
@@ -113,11 +122,19 @@ git push origin v1.0.0
     org.kde.kget.main.addTransfer string:"https://example.com/file.zip" string:"$HOME/Downloads/file.zip" boolean:true
   ```
   If this fails with `ServiceUnknown`, KGet isn't running.
-- **Download-finished notification not showing?** `install.sh` enables it via
-  `kwriteconfig6 --file knotifyrc --group "Event/kget/finished" --key Action Popup`.
-  Check System Settings → Notifications → Applications → "KGet Download
-  Manager" to confirm it's on, or disable it the same way with
-  `kwriteconfig6 --file knotifyrc --group "Event/kget/finished" --key Action None`.
+- **Download-complete notification not showing?** Confirm `notify-send` is
+  installed (`command -v notify-send`) — without it, `kget_capture_host.py`
+  skips the notification entirely rather than erroring. Otherwise, check that
+  the transfer actually reached 100%: `kget_capture_host.py` polls
+  `org.kde.kget.transfer.percent` on the new transfer's D-Bus object path
+  (e.g. `/KGet/Transfers/9`, printed by the `addTransfer` call above) until it
+  hits 100, so a stuck/erroring transfer never fires one. Note this
+  notification is separate from KGet's own built-in "Download Finished"
+  event — `install.sh` disables that one (`kwriteconfig6 --file knotifyrc
+  --group "Event/kget/finished" --key Action None`) because KGet only fires
+  it for transfers it observed in a non-finished state at least once, so it
+  silently skips small/fast downloads that complete before that first
+  observation.
 
 ## License
 

@@ -51,6 +51,24 @@ if [ "$registered_any" = false ]; then
   done
 fi
 
+declare -A BROWSER_SETTINGS_URLS=(
+  ["Google Chrome"]="chrome://settings/downloads"
+  ["Chromium"]="chrome://settings/downloads"
+  ["Brave"]="brave://settings/downloads"
+  ["Vivaldi"]="vivaldi://settings/downloads"
+  ["Microsoft Edge"]="edge://settings/downloads"
+)
+
+echo "Checking Chrome's \"Ask where to save each file\" setting..."
+prompt_warnings=()
+for browser in "${!BROWSER_DIRS[@]}"; do
+  config_dir="${BROWSER_DIRS[$browser]}"
+  prefs_file="$config_dir/Default/Preferences"
+  if [ -f "$prefs_file" ] && grep -q '"prompt_for_download":true' "$prefs_file" 2>/dev/null; then
+    prompt_warnings+=("  - $browser: open ${BROWSER_SETTINGS_URLS[$browser]} and turn off \"Ask where to save each file before downloading\"")
+  fi
+done
+
 echo "Checking KGet's default download folder..."
 python3 - <<'PYEOF'
 import configparser
@@ -90,15 +108,25 @@ else:
     print("(If KGet is currently running, restart it for this to take effect.)")
 PYEOF
 
-echo "Checking KGet's download-finished notification..."
-KNOTIFYRC="$HOME/.config/knotifyrc"
-if [ -f "$KNOTIFYRC" ] && grep -q '^\[Event/kget/finished\]' "$KNOTIFYRC"; then
-  echo "KGet's download-finished notification is already configured, leaving it as-is"
-elif command -v kwriteconfig6 >/dev/null 2>&1; then
-  kwriteconfig6 --file knotifyrc --group "Event/kget/finished" --key Action Popup
-  echo "Enabled a desktop popup notification for KGet's \"Download Finished\" event"
+echo "Disabling KGet's own per-transfer notification..."
+# KGet only fires this event if the transfer was still non-Finished the
+# first time its UI observed it -- small/fast downloads routinely finish
+# before that, so KGet silently skips it for them. kget_capture_host.py
+# shows its own "Download complete" notification (via notify-send) for
+# every capture instead, driven by polling actual transfer progress, so it
+# fires reliably regardless of download speed. Disable KGet's copy here to
+# avoid a duplicate popup on the transfers that are slow enough for it to
+# fire on its own.
+if command -v kwriteconfig6 >/dev/null 2>&1; then
+  kwriteconfig6 --file knotifyrc --group "Event/kget/finished" --key Action None
+  echo "Done -- KGet Capture's own notification will be used instead"
 else
-  echo "Skipped: 'kwriteconfig6' not found (not on KDE Plasma?) -- no popup notification set up"
+  echo "Skipped: 'kwriteconfig6' not found (not on KDE Plasma?) -- KGet's own notification, if any, is left as configured"
+fi
+
+echo "Checking for 'notify-send' (used for the download-complete notification)..."
+if ! command -v notify-send >/dev/null 2>&1; then
+  echo "WARNING: 'notify-send' not found -- captures will still work, but you won't get a notification when they finish"
 fi
 
 EXT_ID=$(cat "$SCRIPT_DIR/keys/extension-id.txt")
@@ -117,3 +145,15 @@ Next steps:
 
 Make sure KGet is running (or set to autostart) for captures to work.
 EOF
+
+if [ "${#prompt_warnings[@]}" -gt 0 ]; then
+  cat <<EOF
+
+WARNING: "Ask where to save each file before downloading" is ON for:
+$(printf '%s\n' "${prompt_warnings[@]}")
+
+Chrome shows that dialog itself, before the extension ever gets a chance to
+intercept the download -- no extension API can read or suppress it. Turn it
+off in each browser above or captures will keep prompting for a location.
+EOF
+fi
