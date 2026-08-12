@@ -83,9 +83,11 @@ git push origin v1.0.0
 
 ## Known limitations
 
-- **`blob:`/`data:` URLs can't be captured.** There's no real network URL to
-  hand to KGet, so these downloads proceed normally through Chrome (a console
-  warning is logged in the extension's service worker).
+- **`blob:`/`data:`/`file:`/`filesystem:` URLs can't be captured.** There's
+  no real network URL to hand to KGet — this includes saving a page you
+  navigated to directly via `file://` (Ctrl+S on it is still a "download" as
+  far as Chrome is concerned) — so these downloads proceed normally through
+  Chrome (a console warning is logged in the extension's service worker).
 - **Auto-capture has a brief head start.** Manifest V3 removed blocking
   `webRequest`, so Chrome begins the download before the extension can cancel
   it. A small/partial temp file may transiently appear before it's erased.

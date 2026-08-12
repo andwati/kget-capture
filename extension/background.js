@@ -11,6 +11,18 @@ async function refreshBadge() {
   updateBadge(autoCaptureEnabled);
 }
 
+// KGet is a network download manager -- it can't "download" a URL that's
+// already local (or embedded in the page), so don't hand it these schemes.
+// file: shows up when saving a page you navigated to directly (Ctrl+S on a
+// file:// URL is still a "download" as far as chrome.downloads is
+// concerned), and KGet's addTransfer rejects it with a confusing
+// "protocol is not supported" dialog if we try.
+const UNSUPPORTED_SCHEMES = ["blob:", "data:", "file:", "filesystem:"];
+
+function isCapturableUrl(url) {
+  return !UNSUPPORTED_SCHEMES.some((scheme) => url.startsWith(scheme));
+}
+
 function sendToKGet(url, filename) {
   chrome.runtime.sendNativeMessage(
     NATIVE_HOST,
@@ -44,6 +56,10 @@ chrome.contextMenus.onClicked.addListener((info) => {
   if (info.menuItemId !== MENU_ID) return;
   const url = info.linkUrl || info.srcUrl;
   if (!url) return;
+  if (!isCapturableUrl(url)) {
+    console.warn("[kget-capture] cannot hand a local/embedded URL to KGet:", url);
+    return;
+  }
   sendToKGet(url, null);
 });
 
@@ -63,8 +79,8 @@ async function captureDownload(item) {
   if (!autoCaptureEnabled) return;
 
   const url = item.finalUrl || item.url;
-  if (url.startsWith("blob:") || url.startsWith("data:")) {
-    console.warn("[kget-capture] cannot redirect blob:/data: URL, letting Chrome handle it:", url);
+  if (!isCapturableUrl(url)) {
+    console.warn("[kget-capture] cannot hand a local/embedded URL to KGet, letting Chrome handle it:", url);
     return;
   }
 
